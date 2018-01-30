@@ -1,0 +1,168 @@
+//index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customers by City</title>
+    
+</head>
+
+<body>
+    <main>
+        <h1>Customers by City</h1>
+        <form action="cust_city.php" method="post">
+
+            <div id="data">
+                <label>City:</label>
+                <input type="text" name="city"><br>
+
+            <div id="buttons">
+                <label>&nbsp;</label>
+                <input type="submit" value="Display Customers"><br>
+            </div>
+
+        </form>
+    </main>
+</body>
+</html>
+
+
+
+
+
+//database.php
+
+<?php
+
+$dsn = 'mysql:host=localhost;dbname=pcparts';
+$username = 'parts_dude';
+$password = 'P@rtzer';
+
+try {
+    $db = new PDO($dsn, $username, $password);
+}
+ catch (PDOException $e) {
+    $error_message = $e ->getMessage();
+    include('database_error.php');
+    exit();
+}
+
+?>
+
+
+
+
+//database_error.php
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Title</title>
+        
+    </head>
+    
+    <body>
+        <main>
+            <h1>Database Error</h1>
+            <p>There was an error connecting to the database.</p>
+            <p>The database must be installed as described in the appendix.</p>
+            <p>The database must be running as described in chapter 1.</p>
+            <p>Error message: <?php echo $error_message; ?></p>
+        </main>
+    </body>
+</html>
+
+
+
+
+
+//cust_city.php
+
+<?php
+    //calling database.php file with require_once function
+    require_once('database.php');
+    
+    
+    
+    //get city
+    $city = filter_input(INPUT_GET, 'city', FILTER_VALIDATE_REGEXP);
+    if($city ==NULL || $city == FALSE) {
+        $city = 1;
+    }
+    
+    
+    
+    //get a name for  a selected city
+    $queryCity = 'SELECT * FROM customers WHERE city = :city';
+    $statement1 = $db->prepare($queryCity);
+    $statement1 ->bindValue(':city', $city);
+    $statement1 -> execute();
+    $city1 = $statement1 -> fetchAll();
+    $city_name = $city['customerCity'];
+    $statement1 -> closeCursor();
+    
+    
+    //get customers for a selected city
+    $queryCustomers = 'SELECT * FROM customers WHERE city = :city ORDER BY name';
+    $statement = $db -> prepare($queryCustomers);
+    $statement -> bindValue(':city', $city);
+    $statement -> execute();
+    $customers = $statement -> fetchAll();
+    $statement -> closeCursor();
+   
+    
+    
+   ?>
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Title</title>
+        
+    </head>
+    
+    <body>
+        <main>
+            <h1>Customer List</h1>
+            <aside>
+                <h2>Customers</h2>
+                <nav>
+                    <ul>
+                        <?php foreach ($customers as $customer) : ?>
+                        <li>
+                            <a href="?city=<?php echo $customer['city']; ?>">
+                                <?php echo $customer['name']; ?>
+                            </a> 
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </nav>
+            </aside>
+            
+            <section>
+                <h2><?php echo $city_name; ?> </h2>
+                <table>
+                    <tr>
+                        <th>CustID</th>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Zip</th>
+                    </tr>
+                    
+                    <?php foreach ($customers as $customer) : ?>
+                    <tr>
+                        <td><?php echo $customer['customerCustID']; ?></td>
+                        <td><?php echo $customer['customerName']; ?></td>
+                        <td><?php echo $customer['customerAddress']; ?></td>
+                        <td><?php echo $customer['customerCity']; ?></td>
+                        <td><?php echo $customer['customerState']; ?></td>
+                        <td><?php echo $customer['customerZip']; ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </table>
+            </section>
+        </main>
+    </body>
+</html>
